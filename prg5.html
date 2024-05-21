@@ -1,0 +1,188 @@
+<!DOCTYPE HTML>
+<html lang="en">
+<head>
+  <title>SENSOR DASHBOARD</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+  <link rel="icon" href="data:,">
+  <style>
+    html {
+      font-family: 'Arial', sans-serif;
+      box-sizing: border-box;
+    }
+    
+    body {
+      margin: 0;
+      background-color: #f4f4f4;
+    }
+
+    .topnav {
+      overflow: hidden;
+      background-color: #FF8080;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .status-box {
+      display: flex;
+      justify-content: space-between;
+      background-color: #FFF;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+      padding: 20px;
+      margin: 20px;
+      text-align: center;
+    }
+
+    .sensor-block {
+      flex-grow: 1;
+    }
+
+    .content {
+      padding: 20px;
+      text-align: center;
+    }
+
+    .card {
+      background-color: white;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+      padding: 20px;
+      margin: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 12px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #FF8080;
+      color: white;
+    }
+
+    h3 {
+      margin: 0;
+    }
+
+    p {
+      font-size: 1.2rem;
+    }
+
+    .reading {
+      font-size: 1.2rem;
+      margin: 0;
+    }
+
+    .status-box {
+      display: flex;
+      justify-content: space-between;
+      background-color: #FFF;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      border-radius: 10px;
+      padding: 20px;
+      margin: 20px;
+      text-align: center;
+    }
+
+    .status-block {
+      flex-grow: 1;
+    }
+
+    .status-value {
+      font-size: 1.5rem;
+      margin: 0;
+      font-weight: bold;
+    }
+
+    .far {
+      margin-right: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="topnav">
+    <h1>SENSOR DASHBOARD</h1>
+  </div>
+  <div class="status-box">
+    <div class="status-block">
+      <h2>LDR Sensor</h2>
+      <p id="ldrStatus" class="status-value">Loading...</p>
+    </div>
+    <div class="status-block">
+      <h2>ACS712 Sensor</h2>
+      <p id="acs712Status" class="status-value">Loading...</p>
+    </div>
+    <div class="status-block">
+      <h2>LM35 Sensor</h2>
+      <p id="lm35Status" class="status-value">Loading...</p>
+    </div>
+  </div>
+  <div class="content">
+    <div class="card">
+      <h2><i class="far fa-lightbulb"></i> Sensor Values</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>LDR Value</th>
+            <th>ACS712 Value</th>
+            <th>LM35 Value</th>
+          </tr>
+        </thead>
+        <tbody id="sensorTable"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    if (!!window.EventSource) {
+      var source = new EventSource('/events');
+
+      source.addEventListener('open', function(e) {
+        console.log("Events Connected");
+      }, false);
+
+      source.addEventListener('error', function(e) {
+        if (e.target.readyState != EventSource.OPEN) {
+          console.log("Events Disconnected");
+        }
+      }, false);
+
+      source.addEventListener('new_readings', function(e) {
+        var obj = JSON.parse(e.data);
+
+        document.getElementById("ldrStatus").innerHTML = obj.readings.length > 0 ? obj.readings[obj.readings.length - 1].ldrValue : "No data";
+        document.getElementById("acs712Status").innerHTML = obj.readings.length > 0 ? obj.readings[obj.readings.length - 1].acs712Value : "No data";
+        document.getElementById("lm35Status").innerHTML = obj.readings.length > 0 ? obj.readings[obj.readings.length - 1].lm35Value : "No data";
+
+        var table = document.getElementById("sensorTable");
+        while (table.firstChild) {
+          table.removeChild(table.firstChild);
+        }
+
+        obj.readings.forEach(function(reading) {
+          var row = table.insertRow();
+          var cell1 = row.insertCell(0);
+          var cell2 = row.insertCell(1);
+          var cell3 = row.insertCell(2);
+          var cell4 = row.insertCell(3);
+          cell1.innerHTML = new Date(reading.timestamp).toLocaleString();
+          cell2.innerHTML = reading.ldrValue;
+          cell3.innerHTML = reading.acs712Value;
+          cell4.innerHTML = reading.lm35Value;
+        });
+      }, false);
+    }
+  </script>
+</body>
+</html>
